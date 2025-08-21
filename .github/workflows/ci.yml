@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+
+      - name: Install root dependencies
+        working-directory: ./deploy
+        run: npm install
+
+      - name: Run contract tests
+        working-directory: ./deploy
+        run: npx hardhat test
+
+      - name: Install interface dependencies
+        working-directory: ./interface
+        run: npm install
+
+      - name: Build interface
+        working-directory: ./interface
+        run: npm run build
