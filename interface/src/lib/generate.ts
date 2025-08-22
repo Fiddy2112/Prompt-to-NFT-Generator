@@ -2,13 +2,18 @@ import { toastError } from "./utils";
 
 const IMAGINE_API_KEY = import.meta.env.VITE_IMAGINE_API_KEY;
 
-const createPrediction = async (prompt: string): Promise<string | null> => {
+const createPrediction = async (
+  prompt: string,
+  style: string,
+  aspectRatio?: string,
+  seed?: number
+): Promise<string | null> => {
   try {
     const formData = new FormData();
     formData.append("prompt", prompt);
-    formData.append("style", "realistic");
-    formData.append("aspect_ratio", "1:1");
-    formData.append("seed", "5");
+    formData.append("style", style);
+    formData.append("aspect_ratio", aspectRatio!.toString());
+    formData.append("seed", seed!.toString());
 
     const response = await fetch("https://api.vyro.ai/v2/image/generations", {
       method: "POST",

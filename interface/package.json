@@ -19,6 +19,8 @@
     "clsx": "^2.1.1",
     "dotenv": "^17.2.1",
     "ethers": "^6.15.0",
+    "lucide-react": "^0.540.0",
+    "pinata": "^2.5.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-hot-toast": "^2.6.0",

@@ -86,10 +86,12 @@ const MyListings = () => {
   if (!wallet) {
     return (
       <div className="p-6 text-center">
-        <p className="mb-4">Connect wallet to view your listings.</p>
+        <p className="mb-4 font-mono text-base">
+          Connect wallet to view your listings.
+        </p>
         <button
           onClick={connectWallet}
-          className="px-4 py-2 bg-blue-600 text-white rounded"
+          className="px-4 py-2 font-mono text-base cursor-pointer bg-[#ff5f0d] hover:bg-[#ff5f0d]/90 text-white rounded"
         >
           Connect Wallet
         </button>
@@ -99,11 +101,13 @@ const MyListings = () => {
 
   return (
     <div className="max-w-5xl mx-auto p-6">
-      <h1 className="text-3xl font-bold text-center mb-6">My Listings</h1>
+      <h1 className="text-3xl font-bold text-center mb-6 font-mono">
+        My Listings
+      </h1>
       {loading && <p className="text-center animate-pulse">Loading...</p>}
 
       {listings.length === 0 && !loading ? (
-        <p className="text-center text-gray-500">
+        <p className="text-center text-gray-500 font-mono">
           You have no active listings.
         </p>
       ) : (
@@ -122,7 +126,7 @@ const MyListings = () => {
                 alt={`NFT ${item.tokenId}`}
                 className="w-full h-64 object-cover rounded"
               />
-              <div className="mt-4 space-y-1 text-sm">
+              <div className="mt-4 space-y-1 text-sm font-mono">
                 <p>
                   <strong>Listing ID:</strong> {item.listingId}
                 </p>
