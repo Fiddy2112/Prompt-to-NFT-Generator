@@ -3,8 +3,6 @@ import { config } from "../config";
 import { useWallet } from "../contexts/useWallet";
 import { toastError, toastSuccess } from "../lib/utils";
 import { AINFT_ABI, AINFT_ADDRESS } from "../contract/contractData";
-import { publicClient } from "../client";
-import { parseAbiItem } from "viem";
 import { readContract } from "@wagmi/core";
 
 type NFTItem = {
@@ -17,44 +15,29 @@ type NFTItem = {
   };
 };
 
+const GATEWAY_URL = import.meta.env.VITE_GATEWAY_URL;
+
 const MyNFTs = () => {
   const { wallet, connectWallet } = useWallet();
   const [nfts, setNFTs] = useState<NFTItem[]>([]);
   const [loading, setLoading] = useState(false);
-
-  // Hàm lấy tokenId từ event Minted của hợp đồng
-  const fetchMintedTokenIds = async (
-    address: `0x${string}`
-  ): Promise<number[]> => {
-    try {
-      const logs = await publicClient.getLogs({
-        address: AINFT_ADDRESS as `0x${string}`,
-        event: parseAbiItem(
-          "event Minted(address indexed to, uint256 indexed tokenId, string tokenURI)"
-        ),
-        args: {
-          to: address,
-        },
-      });
-      return logs.map((log) => Number(log.args.tokenId));
-    } catch (err) {
-      console.error("Error fetching logs:", err);
-      return [];
-    }
-  };
 
   const fetchMyNFTs = async () => {
     if (!wallet) return;
     setLoading(true);
 
     try {
-      // Lấy tokenId của user từ event Minted
-      const tokenIds = await fetchMintedTokenIds(wallet as `0x${string}`);
+      const tokenIds = (await readContract(config, {
+        address: AINFT_ADDRESS as `0x${string}`,
+        abi: AINFT_ABI,
+        functionName: "getTokensByOwner",
+        args: [wallet],
+      })) as bigint[];
 
       const tokens: NFTItem[] = [];
 
-      // Lấy tokenURI cho từng tokenId
-      for (const id of tokenIds) {
+      for (const idBigInt of tokenIds) {
+        const id = Number(idBigInt);
         try {
           const tokenURI = await readContract(config, {
             address: AINFT_ADDRESS as `0x${string}`,
@@ -64,7 +47,9 @@ const MyNFTs = () => {
           });
 
           tokens.push({ tokenId: id, tokenURI: tokenURI as string });
-        } catch {
+        } catch (err) {
+          console.log(err);
+          console.warn(`Failed to read tokenURI for token ${id}`);
           tokens.push({ tokenId: id, tokenURI: "" });
         }
       }
@@ -74,15 +59,18 @@ const MyNFTs = () => {
           if (!nft.tokenURI) return nft;
 
           try {
-            const uri = nft.tokenURI.startsWith("ipfs://")
-              ? nft.tokenURI.replace("ipfs://", "https://ipfs.io/ipfs/")
-              : nft.tokenURI;
+            const uri = `${nft.tokenURI.replace(
+              `${GATEWAY_URL}/`,
+              "https://ipfs.io/"
+            )}`;
 
             const resp = await fetch(uri);
-            if (!resp.ok) throw new Error("Failed fetch");
+            if (!resp.ok) throw new Error("Metadata fetch failed");
+
             const meta = await resp.json();
             return { ...nft, metadata: meta };
-          } catch {
+          } catch (e) {
+            console.error(`Metadata error for token ${nft.tokenId}:`, e);
             return nft;
           }
         })
@@ -91,7 +79,7 @@ const MyNFTs = () => {
       setNFTs(enriched);
       toastSuccess("Fetched your NFTs!");
     } catch (err) {
-      console.error(err);
+      console.error("Error fetching NFTs:", err);
       toastError("Failed to fetch your NFTs.");
     } finally {
       setLoading(false);
@@ -100,7 +88,6 @@ const MyNFTs = () => {
 
   useEffect(() => {
     if (wallet) fetchMyNFTs();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [wallet]);
 
   if (!wallet) {
@@ -119,9 +106,21 @@ const MyNFTs = () => {
     );
   }
 
+  console.log(nfts);
+
   return (
     <div className="max-w-5xl mx-auto p-6">
       <h1 className="text-3xl font-bold mb-6 text-center font-mono">My NFTs</h1>
+
+      <div className="text-center mb-4">
+        <button
+          onClick={fetchMyNFTs}
+          className="px-4 py-2 bg-blue-500 text-white rounded font-mono hover:bg-blue-600 cursor-pointer"
+        >
+          Refresh NFTs
+        </button>
+      </div>
+
       {loading && (
         <p className="text-center animate-pulse font-mono">Loading...</p>
       )}
@@ -129,19 +128,17 @@ const MyNFTs = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
         {nfts.map((nft) => (
           <div key={nft.tokenId} className="border rounded-lg shadow p-4">
-            {nft.metadata?.image ? (
-              <img
-                src={
-                  nft.metadata.image.startsWith("ipfs://")
-                    ? nft.metadata.image.replace(
-                        "ipfs://",
-                        "https://ipfs.io/ipfs/"
-                      )
-                    : nft.metadata.image
-                }
-                alt={nft.metadata.name || `#${nft.tokenId}`}
-                className="w-full h-60 object-cover rounded mb-3"
-              />
+            {nft ? (
+              <>
+                <img
+                  src={`${nft.tokenURI.replace(
+                    `${GATEWAY_URL}/`,
+                    "https://ipfs.io/"
+                  )}`}
+                  alt={`#${nft.tokenId}`}
+                  className="w-full h-60 object-cover rounded mb-3"
+                />
+              </>
             ) : (
               <div className="w-full h-60 bg-gray-200 flex items-center justify-center rounded mb-3">
                 No image

@@ -1,31 +1,47 @@
-import { PinataSDK } from "pinata";
+// import { PinataSDK } from "pinata";
+import { nanoid } from "nanoid";
 
 const PINATA_JWT = import.meta.env.VITE_PINATA_JWT;
 const GATEWAY_URL = import.meta.env.VITE_GATEWAY_URL;
 
-const pinata = new PinataSDK({
-  pinataJwt: PINATA_JWT,
-  pinataGateway: GATEWAY_URL,
-});
+// const pinata = new PinataSDK({
+//   pinataJwt: PINATA_JWT,
+//   pinataGateway: GATEWAY_URL,
+// });
 
-export const uploadToPinata = async (file: Blob): Promise<string | null> => {
+export const uploadToPinata = async (blob: Blob): Promise<string | null> => {
   try {
-    const file = new File([blob], "nft-image.png", {
-      type: blob.type || "image/png",
-      lastModified: Date.now(),
-    });
+    const randomName = nanoid();
+    const file = new File([blob], `${randomName}.jpg`);
 
-    const result = await pinata.upload.public.file(file);
-    const cid = result.data?.cid;
+    const data = new FormData();
+    data.append("file", file);
+    data.append("network", "public");
 
-    if (!cid) {
-      console.error("Missing CID in upload result");
-      return null;
+    const request = await fetch(
+      "https://api.pinata.cloud/pinning/pinFileToIPFS",
+      {
+        method: "POST",
+        body: data,
+        headers: {
+          Authorization: `Bearer ${PINATA_JWT}`,
+        },
+      }
+    );
+
+    if (!request.ok) {
+      throw new Error(
+        `Upload failed: ${request.status} - ${request.statusText}`
+      );
     }
 
-    return `${GATEWAY_URL}/ipfs/${cid}`;
-  } catch (err) {
-    console.error("Pinata error", err);
+    const responseJson = await request.json();
+    console.log("Upload thành công:", responseJson);
+
+    const ipfsHash = responseJson.IpfsHash;
+    return `${GATEWAY_URL}/ipfs/${ipfsHash}`;
+  } catch (error) {
+    console.error("Lỗi upload từ blob URL:", error);
     return null;
   }
 };

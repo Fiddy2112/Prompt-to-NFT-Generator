@@ -16,6 +16,7 @@ type Listing = {
   isActive: boolean;
   isSold: boolean;
   expired: number;
+  tokenURI: string;
 };
 
 const MyListings = () => {
@@ -27,6 +28,7 @@ const MyListings = () => {
   const fetchMyListings = async () => {
     if (!wallet) return;
     setLoading(true);
+
     try {
       const allIds = (await readContract(config, {
         address: AINFT_ADDRESS as `0x${string}`,
@@ -34,6 +36,12 @@ const MyListings = () => {
         functionName: "getListingsByUser",
         args: [wallet],
       })) as number[];
+
+      if (allIds.length === 0) {
+        setListings([]);
+        toastError("You don't have any active listings.");
+        return;
+      }
 
       const data: Listing[] = [];
       for (const id of allIds) {
@@ -45,6 +53,7 @@ const MyListings = () => {
         })) as Listing;
         data.push({ ...listing, listingId: id });
       }
+
       setListings(data);
     } catch (err) {
       console.error("Fetch my listings error:", err);
@@ -59,6 +68,12 @@ const MyListings = () => {
       await connectWallet();
       return toastError("Please connect wallet");
     }
+
+    const confirmed = window.confirm(
+      "Are you sure you want to cancel this listing?"
+    );
+    if (!confirmed) return;
+
     setCancellingId(listingId);
     try {
       await writeContract(config, {
@@ -104,11 +119,13 @@ const MyListings = () => {
       <h1 className="text-3xl font-bold text-center mb-6 font-mono">
         My Listings
       </h1>
+
       {loading && <p className="text-center animate-pulse">Loading...</p>}
 
+      {/* Kiểm tra nếu không có listing */}
       {listings.length === 0 && !loading ? (
         <p className="text-center text-gray-500 font-mono">
-          You have no active listings.
+          You have no active listings. Try listing some NFTs!
         </p>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">

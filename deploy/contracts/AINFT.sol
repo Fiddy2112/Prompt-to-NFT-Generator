@@ -11,6 +11,7 @@ contract AINFT is Ownable, ERC721URIStorage {
 
     mapping(address => bool) public allowedMinters;
     mapping(address => uint256) public mintLimit;
+    mapping(address => uint256[]) private _ownerTokens;
 
     constructor() ERC721("AI Art NFT", "AINFT") Ownable(msg.sender) {}
 
@@ -31,6 +32,8 @@ contract AINFT is Ownable, ERC721URIStorage {
         uint256 tokenId = tokenCount;
         _mint(to, tokenId);
         _setTokenURI(tokenId, tokenURI);
+
+        _ownerTokens[to].push(tokenId);
         emit Minted(to, tokenId, tokenURI);
         return tokenId;
     }
@@ -47,6 +50,8 @@ contract AINFT is Ownable, ERC721URIStorage {
         _safeMint(msg.sender, newTokenId);
         _setTokenURI(newTokenId, tokenURI);
 
+        _ownerTokens[msg.sender].push(newTokenId);
+
         mintLimit[msg.sender]++;
 
         emit Minted(msg.sender, newTokenId, tokenURI);
@@ -56,6 +61,8 @@ contract AINFT is Ownable, ERC721URIStorage {
 
     function burn(uint256 tokenId) public {
         require(ownerOf(tokenId) == msg.sender, "You are not the owner");
+
+        _removeTokenFromOwnerEnumeration(msg.sender, tokenId);
         _burn(tokenId);
     }
 
@@ -63,8 +70,24 @@ contract AINFT is Ownable, ERC721URIStorage {
         lastMintTimestamp[user] = 0;
     }
 
+    function getTokensByOwner(address owner) external view returns(uint256[] memory){
+        return _ownerTokens[owner];
+    }
+
     function withdraw() external onlyOwner {
         payable(owner()).transfer(address(this).balance);
+    }
+
+    function _removeTokenFromOwnerEnumeration(address owner, uint256 tokenId) internal{
+        uint256[] storage tokens = _ownerTokens[owner];
+
+        for(uint256 i =0; i < tokens.length; i++){
+            if (tokens[i] == tokenId) {
+                tokens[i] = tokens[tokens.length - 1];
+                tokens.pop();
+                break;
+            }
+        }
     }
 
     receive() external payable {

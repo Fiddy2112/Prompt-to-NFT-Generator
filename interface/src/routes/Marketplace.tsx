@@ -23,12 +23,14 @@ const Marketplace = () => {
   const { wallet, connectWallet } = useWallet();
 
   const fetchListings = async () => {
+    setLoading(true);
     try {
       const active = (await readContract(config, {
         address: AIMARKET_ADDRESS as `0x${string}`,
         abi: AIMARKET_ABI,
         functionName: "getActiveListings",
       })) as Listing[];
+
       setListings(active);
     } catch (err) {
       console.error("Error fetching listings:", err);
@@ -67,19 +69,29 @@ const Marketplace = () => {
 
   return (
     <div className="max-w-5xl mx-auto p-6">
-      <h1 className="text-3xl font-bold text-center mb-6">🎨 Marketplace</h1>
+      <h1 className="text-3xl font-bold text-center mb-6 text-blue-500">
+        🎨 Marketplace
+      </h1>
 
+      {/* Show loading indicator */}
       {loading && <p className="text-center">Loading NFTs...</p>}
 
+      {/* Display NFT listings */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-        {listings.map((item, index) => (
-          <div key={index} className="border rounded-lg shadow-md p-4">
+        {listings.length === 0 && !loading && (
+          <p className="text-center text-gray-500">
+            No active listings at the moment.
+          </p>
+        )}
+
+        {listings.map((item) => (
+          <div key={item.listingId} className="border rounded-lg shadow-md p-4">
             <img
               src={`https://ipfs.io/ipfs/${item.tokenId}`}
-              alt={`Token ${item.tokenId}`}
+              alt={`NFT Token ${item.tokenId}`}
               className="w-full h-64 object-cover rounded"
             />
-            <div className="mt-4 space-y-1 text-sm">
+            <div className="mt-4 space-y-1 text-sm font-mono">
               <p>
                 <strong>Token ID:</strong> {item.tokenId}
               </p>
@@ -90,8 +102,18 @@ const Marketplace = () => {
                 <strong>Price:</strong> {(Number(item.price) / 1e18).toFixed(4)}{" "}
                 ETH
               </p>
+              <p>
+                <strong>Expires in:</strong>{" "}
+                {item.expired > Date.now() / 1000
+                  ? Math.ceil(
+                      (item.expired - Date.now() / 1000) / (60 * 60 * 24)
+                    )
+                  : "Expired"}{" "}
+                days
+              </p>
             </div>
 
+            {/* Buy button */}
             <button
               onClick={() => handleBuy(item.listingId, item.price)}
               disabled={!item.isActive || item.isSold}
@@ -101,14 +123,32 @@ const Marketplace = () => {
                   : "bg-blue-600 hover:bg-blue-700"
               }`}
             >
-              {item.isSold ? "Sold" : "Buy"}
+              {item.isSold ? "Sold" : item.isActive ? "Buy Now" : "Expired"}
             </button>
           </div>
         ))}
       </div>
 
+      {/* Message if no listings are available */}
       {!loading && listings.length === 0 && (
-        <p className="text-center mt-8 text-gray-500">No active listings.</p>
+        <p className="text-center mt-8 text-gray-500">
+          No active listings at the moment.
+        </p>
+      )}
+
+      {/* Connect Wallet Button */}
+      {!wallet && !loading && (
+        <div className="text-center mt-8">
+          <p className="text-gray-600">
+            Please connect your wallet to view and purchase NFTs
+          </p>
+          <button
+            onClick={connectWallet}
+            className="mt-4 px-6 py-3 bg-orange-500 hover:bg-orange-400 text-white rounded font-semibold"
+          >
+            Connect Wallet
+          </button>
+        </div>
       )}
     </div>
   );

@@ -1,4 +1,4 @@
-export const AINFT_ADDRESS = "0x8cB2f4910c206Dad46Bcb35D1FA17380f143A7c1";
+export const AINFT_ADDRESS = "0x377E0c45174183FB3094D25022b8101F8b780eb1";
 export const AIMARKET_ADDRESS = "0x4b8e672F9eeed1b54e866Aee452A93FD820B7385";
 export const OWNER_ADDRESS = "0x0190AF9A40dc436039965C2E9cbb36CabcbECA8F";
 
@@ -260,6 +260,13 @@ export const AINFT_ABI = [
     type: "function",
   },
   {
+    inputs: [{ internalType: "address", name: "owner", type: "address" }],
+    name: "getTokensByOwner",
+    outputs: [{ internalType: "uint256[]", name: "", type: "uint256[]" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
     inputs: [
       { internalType: "address", name: "owner", type: "address" },
       { internalType: "address", name: "operator", type: "address" },
@@ -430,6 +437,7 @@ export const AINFT_ABI = [
   },
   { stateMutability: "payable", type: "receive" },
 ];
+
 export const AIMARKET_ABI = [
   { inputs: [], stateMutability: "nonpayable", type: "constructor" },
   {

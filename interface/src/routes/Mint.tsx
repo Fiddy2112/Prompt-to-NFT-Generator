@@ -211,7 +211,7 @@ const Mint = () => {
                 Style
               </label>
               <select
-                className="w-full border cursor-pointer rounded-md p-2 font-mono"
+                className="w-full border cursor-pointer rounded-md p-2 font-mono text-sm"
                 value={style}
                 onChange={styleOnChange}
               >
@@ -230,7 +230,7 @@ const Mint = () => {
                 Aspect Ratio
               </label>
               <select
-                className=" cursor-pointer w-full border rounded-md p-2 font-mono"
+                className=" cursor-pointer w-full border rounded-md p-2 font-mono text-sm"
                 value={aspectRatio}
                 onChange={setAspectRatioOnChange}
               >
@@ -257,7 +257,7 @@ const Mint = () => {
                 <input
                   type="number"
                   value={count}
-                  className="w-full text-center font-mono border rounded-md p-2"
+                  className="w-full text-center font-mono border rounded-md p-2 text-sm"
                   readOnly
                 />
                 <button
@@ -277,9 +277,11 @@ const Mint = () => {
           <div className="flex flex-col sm:flex-row gap-4 justify-between">
             <button
               onClick={generateImage}
-              disabled={loadingAI || !prompt.trim()}
-              className={`w-full sm:w-1/2 py-2 rounded-md font-semibold text-white cursor-pointer ${
-                loadingAI ? "bg-gray-400" : "bg-blue-600 hover:bg-blue-700"
+              disabled={loadingAI || !prompt.trim() || signing || minting}
+              className={`w-full sm:w-1/2 py-2 rounded-md font-semibold text-white ${
+                loadingAI || signing || minting
+                  ? " bg-gray-400 cursor-not-allowed "
+                  : "bg-blue-600 hover:bg-blue-700 cursor-pointer"
               }`}
             >
               {loadingAI ? "Generating..." : "Generate Image"}
