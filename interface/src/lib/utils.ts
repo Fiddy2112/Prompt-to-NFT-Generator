@@ -33,3 +33,38 @@ export const copyPaste = (item: string) => {
   });
   return navigator.clipboard.writeText(item);
 };
+
+export const convertTime = (timestamp: number) => {
+  if (timestamp === 0 || !timestamp) {
+    return "No time set";
+  }
+  const date = new Date(timestamp * 1000);
+  const readableTime = date.toLocaleString("en-US", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  });
+
+  return readableTime;
+};
+
+export const dateTime = (timestamp: string) => {
+  const date = new Date(timestamp);
+  return date;
+};
+
+export const formatDate = (timestamp: string) => {
+  const date = new Date(timestamp);
+  const format = date.toLocaleDateString("en-CA");
+  return format;
+};
+
+export const formatFileSize = (bytes: number) => {
+  if (bytes === 0) return "0 B";
+  const units = ["B", "KB", "MB", "GB", "TB", "PB"];
+  const i = Math.floor(Math.log(bytes) / Math.log(1024));
+  return (bytes / Math.pow(1024, i)).toFixed(2) + " " + units[i];
+};
